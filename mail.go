@@ -72,7 +72,7 @@ func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 		body  string
 	)
 
-	for name, entry := range entries {
+	SortKeys(entries, func(name string, entry StatusEntry) {
 		var (
 			src string
 		)
@@ -103,7 +103,7 @@ func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 		body += src
 
 		index++
-	}
+	})
 
 	if down > 0 && up > 0 {
 		title = fmt.Sprintf("Status Alert (%d down, %d up)", down, up)
