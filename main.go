@@ -29,7 +29,7 @@ func main() {
 	log.MustPanic(err)
 
 	log.Info("Reading previous status...")
-	status, err := ReadPrevious()
+	status, err := ReadPrevious(tasks)
 	log.MustPanic(err)
 
 	// Test mail sending
@@ -49,15 +49,13 @@ func main() {
 		mutex sync.Mutex
 		wg    sync.WaitGroup
 
-		emails = make(map[string]StatusEntry)
+		short = SmallJSON{}
 	)
-
-	data := SmallJSON{}
 
 	for name, task := range tasks {
 		log.DebugF("Checking %s...\n", name)
 
-		data.Total++
+		short.Total++
 
 		previous, ok := status.Data[name]
 		previousStatus := ok && previous.Error == ""
@@ -67,7 +65,7 @@ func main() {
 		go func(name string, task Task) {
 			err := task.Resolve()
 
-			newStatus := err.Error == ""
+			currentStatus := err.Error == ""
 
 			if ok {
 				err.Historic = previous.Historic
@@ -77,20 +75,22 @@ func main() {
 				err.Historic = make(map[int64]int)
 			}
 
-			if newStatus != previousStatus {
-				emails[name] = err
+			if currentStatus != previousStatus {
+				err.New = true
+
+				status.New++
 			}
 
-			if !newStatus {
+			if !currentStatus {
 				log.Warning(err.Error)
 
-				data.Offline++
+				short.Offline++
 
 				status.Down++
 
 				err.Historic[minute]++
 			} else {
-				data.Online++
+				short.Online++
 			}
 
 			if ok && previous.Status > 0 && err.Status > 0 {
@@ -113,15 +113,8 @@ func main() {
 
 	wg.Wait()
 
-	if len(emails) > 0 {
-		SendMail(emails, mainConfig)
-	}
-
-	// Cleanup old data
-	for name := range status.Data {
-		if _, ok := tasks[name]; !ok {
-			delete(status.Data, name)
-		}
+	if status.New > 0 {
+		SendMail(status, mainConfig)
 	}
 
 	status.Time = time.Now().Unix()
@@ -130,7 +123,7 @@ func main() {
 	jsn, err := json.Marshal(status)
 	log.MustPanic(err)
 
-	shrt, err := json.Marshal(data)
+	shrt, err := json.Marshal(short)
 	log.MustPanic(err)
 
 	_ = os.WriteFile("status.json", jsn, 0777)

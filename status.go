@@ -29,12 +29,16 @@ type StatusEntry struct {
 	Error    string        `json:"error,omitempty"`
 	Historic map[int64]int `json:"historic,omitempty"`
 	Time     int64         `json:"time"`
+
+	New bool
 }
 
 type StatusJSON struct {
 	Time int64                  `json:"time"`
 	Data map[string]StatusEntry `json:"data"`
 	Down int64                  `json:"down"`
+
+	New int
 }
 
 type SmallJSON struct {
@@ -43,7 +47,7 @@ type SmallJSON struct {
 	Offline int64 `json:"offline"`
 }
 
-func ReadPrevious() (*StatusJSON, error) {
+func ReadPrevious(tasks map[string]Task) (*StatusJSON, error) {
 	_, err := os.Stat("status.json")
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -62,6 +66,13 @@ func ReadPrevious() (*StatusJSON, error) {
 	err = json.Unmarshal(b, &status)
 	if err != nil {
 		return nil, err
+	}
+
+	// Cleanup old data
+	for name := range status.Data {
+		if _, ok := tasks[name]; !ok {
+			delete(status.Data, name)
+		}
 	}
 
 	return &status, nil

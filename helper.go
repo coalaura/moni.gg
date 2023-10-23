@@ -20,9 +20,18 @@ func SortKeys(mp map[string]StatusEntry, cb func(string, StatusEntry)) {
 		aDown := mp[a].Status != 0
 		bDown := mp[b].Status != 0
 
+		aNew := mp[a].New
+		bNew := mp[b].New
+
 		if aDown && !bDown {
 			return true
 		} else if !aDown && bDown {
+			return false
+		}
+
+		if aNew && !bNew {
+			return true
+		} else if !aNew && bNew {
 			return false
 		}
 

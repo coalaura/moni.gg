@@ -21,13 +21,16 @@ var (
 	//go:embed email/service_right.html
 	serviceTemplateRight []byte
 
+	//go:embed email/info.html
+	infoTemplate []byte
+
 	//go:embed email/error.html
 	errorTemplate []byte
 
 	dialer *gomail.Dialer
 )
 
-func SendMail(entries map[string]StatusEntry, cfg *Config) {
+func SendMail(data *StatusJSON, cfg *Config) {
 	if cfg.EmailTo == "" || cfg.SMTPHost == "" || cfg.SMTPUser == "" || cfg.SMTPPassword == "" || cfg.SMTPPort == 0 {
 		return
 	}
@@ -42,9 +45,9 @@ func SendMail(entries map[string]StatusEntry, cfg *Config) {
 	message.SetHeader("From", cfg.SMTPUser)
 	message.SetHeader("To", cfg.EmailTo)
 
-	email, title := BuildMail(entries, cfg.StatusPage)
+	email := BuildMail(data.Data, cfg.StatusPage)
 
-	message.SetHeader("Subject", title)
+	message.SetHeader("Subject", fmt.Sprintf("Status Alert (%d down, %d up)", data.Down, len(data.Data)-int(data.Down)))
 	message.SetBody("text/html", email)
 
 	message.Embed("public/banner.png")
@@ -67,59 +70,56 @@ func SendMail(entries map[string]StatusEntry, cfg *Config) {
 	}
 }
 
-func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
+func BuildMail(entries map[string]StatusEntry, url string) string {
 	var (
-		down  int
-		up    int
 		index int
-
-		title string
 		body  string
 	)
 
 	SortKeys(entries, func(name string, entry StatusEntry) {
-		var (
-			src string
-		)
+		var src string
 
-		if index%2 == 0 {
-			src = string(serviceTemplateRight)
+		if entry.New {
+			if index%2 == 0 {
+				src = string(serviceTemplateRight)
+			} else {
+				src = string(serviceTemplateLeft)
+			}
+
+			src = strings.ReplaceAll(src, "{{type}}", strings.ToLower(entry.Type))
+
+			if entry.Status == 0 {
+				src = strings.ReplaceAll(src, "{{background}}", "#d6ffd6")
+				src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after <b>%dms</b>.", entry.Time))
+				src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
+			} else {
+				err := string(errorTemplate)
+				err = strings.ReplaceAll(err, "{{error}}", entry.Error)
+
+				src = strings.ReplaceAll(src, "{{background}}", "#ffd6d6")
+				src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after <b>%dms</b>. %s", entry.Time, err))
+				src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
+			}
+
+			index++
 		} else {
-			src = string(serviceTemplateLeft)
+			src = string(infoTemplate)
+
+			src = strings.ReplaceAll(src, "{{name}}", name)
+
+			if entry.Status == 0 {
+				src = strings.ReplaceAll(src, "{{background}}", "#b3ffb3")
+				src = strings.ReplaceAll(src, "{{text}}", "Online")
+			} else {
+				src = strings.ReplaceAll(src, "{{background}}", "#ffb3b3")
+				src = strings.ReplaceAll(src, "{{text}}", "Still Offline")
+			}
 		}
 
 		src = strings.ReplaceAll(src, "{{name}}", name)
-		src = strings.ReplaceAll(src, "{{type}}", strings.ToLower(entry.Type))
-
-		if entry.Status == 0 {
-			src = strings.ReplaceAll(src, "{{background}}", "#ebffeb")
-			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after <b>%dms</b>.", entry.Time))
-			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
-
-			up++
-		} else {
-			err := string(errorTemplate)
-			err = strings.ReplaceAll(err, "{{error}}", entry.Error)
-
-			src = strings.ReplaceAll(src, "{{background}}", "#ffebeb")
-			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after <b>%dms</b>. %s", entry.Time, err))
-			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
-
-			down++
-		}
 
 		body += src
-
-		index++
 	})
-
-	if down > 0 && up > 0 {
-		title = fmt.Sprintf("Status Alert (%d down, %d up)", down, up)
-	} else if down > 0 {
-		title = fmt.Sprintf("Status Alert (%d down)", down)
-	} else {
-		title = fmt.Sprintf("Status Alert (%d up)", up)
-	}
 
 	html := string(mainTemplate)
 
@@ -129,30 +129,32 @@ func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 
 	html = strings.ReplaceAll(html, "{{body}}", body)
 
-	return html, title
+	return html
 }
 
 func SendExampleMail(cfg *Config) {
 	entries := map[string]StatusEntry{
-		"Online": {
+		"Alpha": {
+			Type:   "HTTP",
+			Status: 0,
+			Error:  "",
+			Time:   int64(rand.Intn(1000)),
+			New:    true,
+		},
+		"Charlie": {
 			Type:   "HTTP",
 			Status: 0,
 			Error:  "",
 			Time:   int64(rand.Intn(1000)),
 		},
-		"Online 2": {
-			Type:   "HTTP",
-			Status: 0,
-			Error:  "",
-			Time:   int64(rand.Intn(1000)),
-		},
-		"Offline": {
+		"Bravo": {
 			Type:   "HTTP",
 			Status: time.Now().Unix() - int64(rand.Intn(60*60)),
 			Error:  "Failed to connect to host",
 			Time:   int64(rand.Intn(1000)),
+			New:    true,
 		},
-		"Offline 2": {
+		"Delta": {
 			Type:   "HTTP",
 			Status: time.Now().Unix() - int64(rand.Intn(60*60)),
 			Error:  "Failed to connect to host",
@@ -160,5 +162,8 @@ func SendExampleMail(cfg *Config) {
 		},
 	}
 
-	SendMail(entries, cfg)
+	SendMail(&StatusJSON{
+		Data: entries,
+		Down: 2,
+	}, cfg)
 }
