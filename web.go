@@ -42,11 +42,13 @@ func Resolve(lines []string) StatusEntry {
 }
 
 func _request(method, url, data string, headers map[string]string) StatusEntry {
+	start := time.Now()
+
 	body := strings.NewReader(data)
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return _error(err)
+		return _error(err, _time(start))
 	}
 
 	for key, value := range headers {
@@ -59,24 +61,30 @@ func _request(method, url, data string, headers map[string]string) StatusEntry {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return _error(err)
+		return _error(err, _time(start))
 	}
 
 	if resp.StatusCode != 200 {
-		return _error(errors.New(fmt.Sprintf("Status code was %d instead of 200", resp.StatusCode)))
+		return _error(errors.New(fmt.Sprintf("Status code was %d instead of 200", resp.StatusCode)), _time(start))
 	}
 
 	return StatusEntry{
 		Status: 0,
 		Type:   "http",
 		Error:  "",
+		Time:   _time(start),
 	}
 }
 
-func _error(err error) StatusEntry {
+func _error(err error, t int64) StatusEntry {
 	return StatusEntry{
 		Status: time.Now().Unix(),
 		Type:   "http",
 		Error:  err.Error(),
+		Time:   t,
 	}
+}
+
+func _time(start time.Time) int64 {
+	return time.Now().Sub(start).Milliseconds()
 }
