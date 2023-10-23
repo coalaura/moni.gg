@@ -34,13 +34,7 @@ func main() {
 
 	// Test mail sending
 	if len(os.Args) > 1 && os.Args[1] == "mail" {
-		if len(status.Data) == 0 {
-			log.Error("No previous status data found")
-
-			return
-		}
-
-		SendMail(status.Data, mainConfig)
+		SendExampleMail(mainConfig)
 
 		return
 	}

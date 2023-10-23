@@ -4,7 +4,9 @@ import (
 	"crypto/tls"
 	_ "embed"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"gopkg.in/gomail.v2"
 )
@@ -18,6 +20,9 @@ var (
 
 	//go:embed email/service_right.html
 	serviceTemplateRight []byte
+
+	//go:embed email/error.html
+	errorTemplate []byte
 
 	dialer *gomail.Dialer
 )
@@ -84,17 +89,20 @@ func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 		}
 
 		src = strings.ReplaceAll(src, "{{name}}", name)
-		src = strings.ReplaceAll(src, "{{type}}", entry.Type)
+		src = strings.ReplaceAll(src, "{{type}}", strings.ToLower(entry.Type))
 
 		if entry.Status == 0 {
 			src = strings.ReplaceAll(src, "{{background}}", "#ebffeb")
-			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after %dms.", entry.Time))
+			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after <b>%dms</b>.", entry.Time))
 			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
 
 			up++
 		} else {
+			err := string(errorTemplate)
+			err = strings.ReplaceAll(err, "{{error}}", entry.Error)
+
 			src = strings.ReplaceAll(src, "{{background}}", "#ffebeb")
-			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after %dms with the error: <i>%s</i>.", entry.Time, entry.Error))
+			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after <b>%dms</b>. %s", entry.Time, err))
 			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
 
 			down++
@@ -121,4 +129,35 @@ func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 	html = strings.ReplaceAll(html, "{{body}}", body)
 
 	return html, title
+}
+
+func SendExampleMail(cfg *Config) {
+	entries := map[string]StatusEntry{
+		"Online": {
+			Type:   "HTTP",
+			Status: 0,
+			Error:  "",
+			Time:   int64(rand.Intn(1000)),
+		},
+		"Online 2": {
+			Type:   "HTTP",
+			Status: 0,
+			Error:  "",
+			Time:   int64(rand.Intn(1000)),
+		},
+		"Offline": {
+			Type:   "HTTP",
+			Status: time.Now().Unix() - int64(rand.Intn(60*60)),
+			Error:  "Failed to connect to host",
+			Time:   int64(rand.Intn(1000)),
+		},
+		"Offline 2": {
+			Type:   "HTTP",
+			Status: time.Now().Unix() - int64(rand.Intn(60*60)),
+			Error:  "Failed to connect to host",
+			Time:   int64(rand.Intn(1000)),
+		},
+	}
+
+	SendMail(entries, cfg)
 }
