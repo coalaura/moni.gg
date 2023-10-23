@@ -1,0 +1,160 @@
+* {
+	font-family: 'Montserrat', sans-serif;
+	box-sizing: border-box;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	background: #1D2023;
+	margin: 0;
+	font-size: 13px;
+}
+
+#page {
+	padding: 40px 60px;
+	max-width: 1000px;
+	margin: auto;
+}
+
+#status {
+	border-radius: 4px;
+	padding: 12px 20px;
+	font-weight: bold;
+	color: #fff;
+	box-shadow: rgba(0, 0, 0, 0.15) 0 4px 12px 0;
+	font-size: 22px;
+	position: relative;
+	overflow: hidden;
+	line-height: 90px;
+}
+
+.main-status {
+	position: absolute;
+	height: 100%;
+	top: 0;
+	right: 0;
+}
+
+#status.up {
+	background: #1e5409aa;
+}
+
+#status.down {
+	background: #540909aa;
+}
+
+#services {
+	margin-top: 25px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.service {
+	padding: 17px 20px;
+	border: 1px solid rgba(255, 255, 255, 0.13);
+	width: 100%;
+	margin-bottom: 20px;
+	border-radius: 2px;
+	box-shadow: rgba(0, 0, 0, 0.05) 0 2px 6px 0;
+	position: relative;
+	color: #fff;
+}
+
+.service .name {
+	font-size: 16px;
+	font-weight: bold;
+	display: block;
+	margin-bottom: 5px;
+	padding-right: 60px;
+}
+
+.service .name sup {
+	font-size: 12px;
+	display: inline-block;
+	font-weight: normal;
+}
+
+.service .status-msg {
+	font-size: 14px;
+	display: block;
+	color: #96989D;
+	padding-right: 60px;
+}
+
+.service::after {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 44px;
+	height: 44px;
+	top: 17px;
+	right: 20px;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.service.up::after {
+	background-image: url(up.png);
+}
+
+.service.down::after {
+	background-image: url(down.png);
+}
+
+.service.up {
+	background: rgb(50, 61, 46);
+}
+
+.service.down {
+	background: rgb(61, 46, 46);
+}
+
+.historic {
+	height: 25px;
+	margin-top: 15px;
+	display: flex;
+	justify-content: space-between;
+}
+
+.historic .slice {
+	height: 100%;
+	width: calc((100% / 121) - 1px);
+	border-radius: 3px;
+	cursor: pointer;
+	transition: 150ms;
+}
+
+.historic .slice:hover {
+	filter: brightness(90%);
+}
+
+#time {
+	margin-top: 10px;
+	color: #96989D;
+	font-style: italic;
+}
+
+#footer {
+	background: #22262a;
+	padding: 10px 20px;
+	position: fixed;
+	width: 100%;
+	bottom: 0;
+	color: #96989D;
+	text-align: center;
+}
+
+#footer a {
+	color: #96989D;
+	text-decoration: none;
+	transition: 250ms;
+}
+
+
+#footer a:hover,
+#footer a:focus {
+	color: #fff;
+}
