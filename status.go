@@ -91,25 +91,34 @@ func ReadMainConfig() (*Config, error) {
 	}, nil
 }
 
-func ReadConfigs() (map[string][]string, error) {
-	configs := make(map[string][]string)
+func ReadConfigs() (map[string]Task, error) {
+	configs := make(map[string]Task)
 
 	err := filepath.Walk("./config", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if strings.HasSuffix(path, ".http") {
-			data, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
+		ext := filepath.Ext(path)
 
-			lines := strings.Split(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n")
+		if ext != ".http" && ext != ".mysql" {
+			return nil
+		}
 
-			name := strings.Split(filepath.Base(path), ".")[0]
+		name := strings.Split(filepath.Base(path), ".")[0]
 
-			configs[name] = lines
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		content := strings.ReplaceAll(string(data), "\r\n", "\n")
+
+		switch ext {
+		case ".http":
+			configs[name] = NewHTTPTask(content)
+		case ".mysql":
+			configs[name] = NewMySQLTask(content)
 		}
 
 		return nil

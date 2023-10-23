@@ -25,7 +25,7 @@ func main() {
 	log.MustPanic(err)
 
 	log.Info("Reading .envs...")
-	configs, err := ReadConfigs()
+	tasks, err := ReadConfigs()
 	log.MustPanic(err)
 
 	log.Info("Reading previous status...")
@@ -54,7 +54,7 @@ func main() {
 
 	data := SmallJSON{}
 
-	for name, config := range configs {
+	for name, task := range tasks {
 		log.DebugF("Checking %s...\n", name)
 
 		data.Total++
@@ -64,8 +64,9 @@ func main() {
 
 		wg.Add(1)
 
-		go func(name string, config []string) {
-			err := Resolve(config)
+		go func(name string, task Task) {
+			err := task.Resolve()
+
 			newStatus := err.Error == ""
 
 			if ok {
@@ -107,7 +108,7 @@ func main() {
 			mutex.Unlock()
 
 			wg.Done()
-		}(name, config)
+		}(name, task)
 	}
 
 	wg.Wait()
@@ -118,7 +119,7 @@ func main() {
 
 	// Cleanup old data
 	for name := range status.Data {
-		if _, ok := configs[name]; !ok {
+		if _, ok := tasks[name]; !ok {
 			delete(status.Data, name)
 		}
 	}

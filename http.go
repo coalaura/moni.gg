@@ -8,7 +8,58 @@ import (
 	"time"
 )
 
-func Resolve(lines []string) StatusEntry {
+type HTTPTask struct {
+	Method  string
+	URL     string
+	Headers map[string]string
+	Data    string
+}
+
+func NewHTTPTask(content string) *HTTPTask {
+	lines := strings.Split(content, "\n")
+
+	header := strings.Split(lines[0], " ")
+	headers := make(map[string]string)
+
+	data := make([]string, 0)
+
+	headerOver := false
+
+	for _, line := range lines[1:] {
+		if headerOver {
+			data = append(data, line)
+		} else {
+			if line == "" {
+				headerOver = true
+			} else {
+				entry := strings.Split(line, ": ")
+
+				headers[entry[0]] = entry[1]
+			}
+		}
+	}
+
+	return &HTTPTask{
+		Method:  header[0],
+		URL:     "https://" + headers["Host"] + header[1],
+		Headers: headers,
+		Data:    strings.Join(data, "\n"),
+	}
+}
+
+func (h *HTTPTask) Resolve() StatusEntry {
+	resp := _request(h.Method, h.URL, h.Data, h.Headers)
+
+	if resp.Error != "" {
+		time.Sleep(10 * time.Second)
+
+		resp = _request(h.Method, h.URL, h.Data, h.Headers)
+	}
+
+	return resp
+}
+
+func ResolveHTTP(lines []string) StatusEntry {
 	header := strings.Split(lines[0], " ")
 	headers := make(map[string]string)
 
@@ -74,17 +125,4 @@ func _request(method, url, data string, headers map[string]string) StatusEntry {
 		Error:  "",
 		Time:   _time(start),
 	}
-}
-
-func _error(err error, t int64) StatusEntry {
-	return StatusEntry{
-		Status: time.Now().Unix(),
-		Type:   "http",
-		Error:  err.Error(),
-		Time:   t,
-	}
-}
-
-func _time(start time.Time) int64 {
-	return time.Now().Sub(start).Milliseconds()
 }

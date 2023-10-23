@@ -1,6 +1,9 @@
 package main
 
-import "sort"
+import (
+	"sort"
+	"time"
+)
 
 func SortKeys(mp map[string]StatusEntry, cb func(string, StatusEntry)) {
 	keys := make([]string, 0, len(mp))
@@ -29,4 +32,17 @@ func SortKeys(mp map[string]StatusEntry, cb func(string, StatusEntry)) {
 	for _, k := range keys {
 		cb(k, mp[k])
 	}
+}
+
+func _error(err error, t int64) StatusEntry {
+	return StatusEntry{
+		Status: time.Now().Unix(),
+		Type:   "http",
+		Error:  err.Error(),
+		Time:   t,
+	}
+}
+
+func _time(start time.Time) int64 {
+	return time.Now().Sub(start).Milliseconds()
 }
