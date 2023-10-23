@@ -125,6 +125,7 @@ func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 
 	html = strings.ReplaceAll(html, "{{url}}", url)
 	html = strings.ReplaceAll(html, "{{banner}}", "cid:banner.png")
+	html = strings.ReplaceAll(html, "{{time}}", time.Now().Format("1/2/2006 - 3:04:05 PM MST"))
 
 	html = strings.ReplaceAll(html, "{{body}}", body)
 
