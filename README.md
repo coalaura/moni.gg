@@ -1,4 +1,4 @@
-# moni.gg
+![banner](banner.png)
 
 moni.gg is a status monitor written in golang.
 
