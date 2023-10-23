@@ -37,7 +37,7 @@ func SendMail(entries map[string]StatusEntry, cfg *Config) {
 	message.SetHeader("From", cfg.SMTPUser)
 	message.SetHeader("To", cfg.EmailTo)
 
-	email, title := BuildMail(entries)
+	email, title := BuildMail(entries, cfg.StatusPage)
 
 	message.SetHeader("Subject", title)
 	message.SetBody("text/html", email)
@@ -62,7 +62,7 @@ func SendMail(entries map[string]StatusEntry, cfg *Config) {
 	}
 }
 
-func BuildMail(entries map[string]StatusEntry) (string, string) {
+func BuildMail(entries map[string]StatusEntry, url string) (string, string) {
 	var (
 		down  int
 		up    int
@@ -87,13 +87,13 @@ func BuildMail(entries map[string]StatusEntry) (string, string) {
 		src = strings.ReplaceAll(src, "{{type}}", entry.Type)
 
 		if entry.Status == 0 {
-			src = strings.ReplaceAll(src, "{{background}}", "rgba(153, 255, 153, 0.2)")
+			src = strings.ReplaceAll(src, "{{background}}", "#ffebeb")
 			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after %dms.", entry.Time))
 			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
 
 			up++
 		} else {
-			src = strings.ReplaceAll(src, "{{background}}", "rgba(255, 153, 153, 0.2)")
+			src = strings.ReplaceAll(src, "{{background}}", "#ebffeb")
 			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after %dms with the error: <i>%s</i>.", entry.Time, entry.Error))
 			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
 
@@ -109,15 +109,13 @@ func BuildMail(entries map[string]StatusEntry) (string, string) {
 		title = fmt.Sprintf("Status Alert (%d down, %d up)", down, up)
 	} else if down > 0 {
 		title = fmt.Sprintf("Status Alert (%d down)", down)
-	} else if up > 0 {
-		title = fmt.Sprintf("Status Alert (%d up)", up)
 	} else {
-		title = "Status Alert"
+		title = fmt.Sprintf("Status Alert (%d up)", up)
 	}
 
 	html := string(mainTemplate)
 
-	html = strings.ReplaceAll(html, "{{title}}", title)
+	html = strings.ReplaceAll(html, "{{url}}", url)
 	html = strings.ReplaceAll(html, "{{banner}}", "cid:banner.png")
 
 	html = strings.ReplaceAll(html, "{{body}}", body)

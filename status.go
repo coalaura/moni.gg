@@ -13,8 +13,6 @@ import (
 )
 
 type Config struct {
-	Webhook string
-
 	StatusPage string
 
 	EmailTo string
@@ -83,8 +81,6 @@ func ReadMainConfig() (*Config, error) {
 	port, _ := strconv.Atoi(env["SMTP_PORT"])
 
 	return &Config{
-		Webhook: env["WEBHOOK"],
-
 		StatusPage: env["STATUS_PAGE"],
 
 		EmailTo:      env["EMAIL_TO"],
