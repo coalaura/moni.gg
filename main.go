@@ -39,6 +39,7 @@ func main() {
 		return
 	}
 
+	status.New = 0
 	status.Down = 0
 
 	minute := getMinute()

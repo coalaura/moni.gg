@@ -38,7 +38,7 @@ type StatusJSON struct {
 	Data map[string]StatusEntry `json:"data"`
 	Down int64                  `json:"down"`
 
-	New int
+	New int `json:"new"`
 }
 
 type SmallJSON struct {
