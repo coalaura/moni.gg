@@ -56,12 +56,12 @@ func SendMail(entries map[string]StatusEntry, cfg *Config) {
 
 	message.Embed("public/banner.png")
 
-	if strings.Contains(email, "cid:email_up.png") {
-		message.Embed("public/email_up.png")
+	if strings.Contains(email, "cid:mail_up.png") {
+		message.Embed("public/mail_up.png")
 	}
 
-	if strings.Contains(email, "cid:email_down.png") {
-		message.Embed("public/email_down.png")
+	if strings.Contains(email, "cid:mail_down.png") {
+		message.Embed("public/mail_down.png")
 	}
 
 	err := dialer.DialAndSend(message)
@@ -101,10 +101,10 @@ func BuildMail(entries map[string]StatusEntry) (string, string) {
 
 		if entry.Status == 0 {
 			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after %dms.", entry.Time))
-			src = strings.ReplaceAll(src, "{{image}}", "cid:email_up.png")
+			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
 		} else {
 			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after %dms with the error: <i>%s</i>.", entry.Time, entry.Error))
-			src = strings.ReplaceAll(src, "{{image}}", "cid:email_down.png")
+			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
 		}
 
 		body += src
