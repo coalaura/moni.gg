@@ -20,18 +20,6 @@ var (
 	serviceTemplateRight []byte
 
 	dialer *gomail.Dialer
-
-	colors = []string{
-		"rgba(255, 153, 153, 0.2)",
-		"rgba(255, 221, 153, 0.2)",
-		"rgba(221, 255, 153, 0.2)",
-		"rgba(153, 255, 153, 0.2)",
-		"rgba(153, 255, 221, 0.2)",
-		"rgba(153, 221, 255, 0.2)",
-		"rgba(153, 153, 255, 0.2)",
-		"rgba(221, 153, 255, 0.2)",
-		"rgba(255, 153, 221, 0.2)",
-	}
 )
 
 func SendMail(entries map[string]StatusEntry, cfg *Config) {
@@ -97,14 +85,15 @@ func BuildMail(entries map[string]StatusEntry) (string, string) {
 
 		src = strings.ReplaceAll(src, "{{name}}", name)
 		src = strings.ReplaceAll(src, "{{type}}", entry.Type)
-		src = strings.ReplaceAll(src, "{{background}}", colors[index%len(colors)])
 
 		if entry.Status == 0 {
+			src = strings.ReplaceAll(src, "{{background}}", "rgba(153, 255, 153, 0.2)")
 			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after %dms.", entry.Time))
 			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
 
 			up++
 		} else {
+			src = strings.ReplaceAll(src, "{{background}}", "rgba(255, 153, 153, 0.2)")
 			src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after %dms with the error: <i>%s</i>.", entry.Time, entry.Error))
 			src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
 
