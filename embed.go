@@ -7,6 +7,13 @@ import (
 	"encoding/hex"
 	"io/fs"
 	"os"
+	"path/filepath"
+	"regexp"
+
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
+	"github.com/tdewolff/minify/v2/html"
+	"github.com/tdewolff/minify/v2/js"
 )
 
 const (
@@ -30,22 +37,63 @@ func ReBuildFrontend(cfg *Config) error {
 
 	h := _hash(files)
 
+	m := minify.New()
+
+	m.AddFunc("text/css", css.Minify)
+	m.AddFunc("text/html", html.Minify)
+	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
+
+	var (
+		html bytes.Buffer
+		css  bytes.Buffer
+		js   bytes.Buffer
+	)
+
 	for _, file := range files {
 		if file.IsDir() {
 			continue
 		}
 
-		content, err := embedFS.ReadFile("embed/" + file.Name())
+		name := file.Name()
+		mime := _mime(name)
+
+		content, err := embedFS.ReadFile("embed/" + name)
 		if err != nil {
 			return err
 		}
 
 		content = _setVariables(content, cfg, h)
 
-		err = os.WriteFile("public/"+file.Name(), content, 0777)
+		content, err = m.Bytes(mime, content)
 		if err != nil {
 			return err
 		}
+
+		switch mime {
+		case "text/html":
+			html.Write(content)
+		case "text/css":
+			css.Write(content)
+			css.Write([]byte("\n"))
+		case "application/javascript":
+			js.Write(content)
+			js.Write([]byte("\n"))
+		}
+	}
+
+	err = os.WriteFile("public/index.html", html.Bytes(), 0644)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("public/main.css", css.Bytes(), 0644)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("public/main.js", js.Bytes(), 0644)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -89,6 +137,19 @@ func _hash(files []fs.DirEntry) string {
 	}
 
 	return hex.EncodeToString(hash.Sum(nil))[0:8]
+}
+
+func _mime(name string) string {
+	switch filepath.Ext(name) {
+	case ".css":
+		return "text/css"
+	case ".html":
+		return "text/html"
+	case ".js":
+		return "application/javascript"
+	}
+
+	return ""
 }
 
 func _join(url []byte, path []byte) []byte {
