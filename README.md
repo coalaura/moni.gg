@@ -5,6 +5,8 @@ moni.gg is a status monitor written in golang.
 ## Usage
 The status monitor gets executed every x minutes via cron. All monitoring targets have their own file inside the `config/` folder (gets created upon initial execution). It currently supports only http(s) and mysql/mariadb monitoring.
 
+[Example Statuspage](https://status.opfw.net/)
+
 ### http(s)
 The config files for http(s) targets are standard `.http` files that you can export from postman.
 
@@ -30,6 +32,21 @@ EMAIL_TO=hello@example.com
 SMTP_HOST=
 SMTP_USER=
 SMTP_PASSWORD=
+
+# Path to your favicon
+TEMPLATE_FAVICON=
+
+# Path to your banner
+TEMPLATE_BANNER=
+
+# URL of the status page
+TEMPLATE_URL=
+
+# Title of the status page
+TEMPLATE_TITLE=
+
+# Description of the status page
+TEMPLATE_DESCRIPTION=
 ```
 
 After you've configured the `.env` file, you have to copy the `public/` directory to your webserver. The `public/` directory contains the status page that is shown to your users. It has to be in the same directory as the `config/` directory and the executable.
