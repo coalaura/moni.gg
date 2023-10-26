@@ -134,7 +134,7 @@
 						`<div class="service ${status.operational ? "up" : "down"}">`,
 						`<div class="header">`,
 						`<span class="name">${name} <sup>${status.type}</sup></span>`,
-						`<span class="status">${status.operational ? "Operational" : "Outage"}</span>`,
+						`<span class="status" title="${status.response_time.toLocaleString("en-US")}ms">${status.operational ? "Operational" : "Outage"}</span>`,
 						`</div>`,
 						`<div class="body">`,
 						svg.svg,
