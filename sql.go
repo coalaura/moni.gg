@@ -93,7 +93,7 @@ func _mysql(hostname, port, username, password, database, query string) StatusEn
 	defer rows.Close()
 
 	if !rows.Next() {
-		return _error(errors.New("No rows returned"), _time(start))
+		return _error(errors.New("no rows returned"), _time(start))
 	}
 
 	return StatusEntry{

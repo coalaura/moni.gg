@@ -39,8 +39,13 @@ func ReBuildFrontend(cfg *Config) error {
 
 	m := minify.New()
 
+	htmlMin := html.Minifier{
+		KeepDocumentTags: true,
+		KeepQuotes:       true,
+	}
+
 	m.AddFunc("text/css", css.Minify)
-	m.AddFunc("text/html", html.Minify)
+	m.AddFunc("text/html", htmlMin.Minify)
 	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
 
 	var (

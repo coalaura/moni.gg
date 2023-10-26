@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -116,7 +115,7 @@ func _request(method, url, data string, headers map[string]string) StatusEntry {
 	}
 
 	if resp.StatusCode != 200 {
-		return _error(errors.New(fmt.Sprintf("Status code was %d instead of 200", resp.StatusCode)), _time(start))
+		return _error(fmt.Errorf("status code was %d instead of 200", resp.StatusCode), _time(start))
 	}
 
 	return StatusEntry{

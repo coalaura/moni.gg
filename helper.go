@@ -53,5 +53,5 @@ func _error(err error, responseTime int64) StatusEntry {
 }
 
 func _time(start time.Time) int64 {
-	return time.Now().Sub(start).Milliseconds()
+	return time.Since(start).Milliseconds()
 }
