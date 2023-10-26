@@ -5,9 +5,7 @@ import (
 	"crypto/md5"
 	"embed"
 	"encoding/hex"
-	"io/fs"
 	"os"
-	"path/filepath"
 	"regexp"
 
 	"github.com/tdewolff/minify/v2"
@@ -24,19 +22,26 @@ const (
 	DefaultDescription = "Stay informed with our status page. Tailored updates and real-time insights for a smooth experience. Keep a whisker's length ahead of any issues."
 )
 
+type EmbedFile struct {
+	Name     string
+	MimeType string
+	Content  []byte
+
+	Variables bool
+}
+
 var (
 	//go:embed embed/*
 	embedFS embed.FS
+
+	files = []EmbedFile{
+		{Name: "index.html", MimeType: "text/html", Variables: true},
+		{Name: "main.css", MimeType: "text/css"},
+		{Name: "main.js", MimeType: "application/javascript"},
+	}
 )
 
 func ReBuildFrontend(cfg *Config) error {
-	files, err := embedFS.ReadDir("embed")
-	if err != nil {
-		return err
-	}
-
-	h := _hash(files)
-
 	m := minify.New()
 
 	htmlMin := html.Minifier{
@@ -48,57 +53,35 @@ func ReBuildFrontend(cfg *Config) error {
 	m.AddFunc("text/html", htmlMin.Minify)
 	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
 
-	var (
-		html bytes.Buffer
-		css  bytes.Buffer
-		js   bytes.Buffer
-	)
+	for i, file := range files {
+		content, err := embedFS.ReadFile("embed/" + file.Name)
+		if err != nil {
+			return err
+		}
+
+		/*
+			content, err = m.Bytes(file.MimeType, content)
+			if err != nil {
+				return err
+			}
+		*/
+
+		file.Content = content
+
+		files[i] = file
+	}
+
+	hash := _hash()
 
 	for _, file := range files {
-		if file.IsDir() {
-			continue
+		if file.Variables {
+			file.Content = _setVariables(file.Content, cfg, hash)
 		}
 
-		name := file.Name()
-		mime := _mime(name)
-
-		content, err := embedFS.ReadFile("embed/" + name)
+		err := os.WriteFile("public/"+file.Name, file.Content, 0644)
 		if err != nil {
 			return err
 		}
-
-		content = _setVariables(content, cfg, h)
-
-		content, err = m.Bytes(mime, content)
-		if err != nil {
-			return err
-		}
-
-		switch mime {
-		case "text/html":
-			html.Write(content)
-		case "text/css":
-			css.Write(content)
-			css.Write([]byte("\n"))
-		case "application/javascript":
-			js.Write(content)
-			js.Write([]byte("\n"))
-		}
-	}
-
-	err = os.WriteFile("public/index.html", html.Bytes(), 0644)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile("public/main.css", css.Bytes(), 0644)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile("public/main.js", js.Bytes(), 0644)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -128,33 +111,14 @@ func _default(value string, def string) []byte {
 	return []byte(value)
 }
 
-func _hash(files []fs.DirEntry) string {
+func _hash() string {
 	hash := md5.New()
 
 	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		content, _ := embedFS.ReadFile("embed/" + file.Name())
-
-		hash.Write(content)
+		hash.Write(file.Content)
 	}
 
 	return hex.EncodeToString(hash.Sum(nil))[0:8]
-}
-
-func _mime(name string) string {
-	switch filepath.Ext(name) {
-	case ".css":
-		return "text/css"
-	case ".html":
-		return "text/html"
-	case ".js":
-		return "application/javascript"
-	}
-
-	return ""
 }
 
 func _join(url []byte, path []byte) []byte {

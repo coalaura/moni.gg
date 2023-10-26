@@ -1,3 +1,7 @@
+* {
+	box-sizing: border-box;
+}
+
 html,
 body {
 	width: 100%;
@@ -119,6 +123,46 @@ body {
 	background: #c6ccdc;
 	opacity: 0.3;
 	height: 1px;
+}
+
+#popover {
+	border: 1px solid hsla(60, 93%, 94%, 0.1);
+	background: #161923;
+	color: #FFFFF0;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+	border-radius: 3px;
+	position: absolute;
+	width: 200px;
+	padding: 10px 25px;
+	z-index: 1000;
+	font-size: 14.8px;
+	line-height: 22.42px;
+	font-size: 0.925rem;
+	line-height: 1.4rem;
+}
+
+#popover b {
+	display: block;
+	font-size: 14px;
+	font-weight: 500;
+	margin-bottom: 5px;
+}
+
+#popover .arrow {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	border-top: 1px solid #fff;
+	border-left: 1px solid #fff;
+	transform: rotate(45deg);
+	transform-origin: top left;
+	background: #161923;
+	z-index: 1;
+	top: -7.5px;
+}
+
+#popover:not(.show) {
+	display: none;
 }
 
 #time {

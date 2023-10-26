@@ -51,9 +51,9 @@
 		const hours = Math.floor(downtime / 60);
 		downtime = downtime % 60;
 
-		const time = downtime > 0 ? `${hours.toString().padStart(2, "0")}:${downtime.toString().padStart(2, "0")}` : "No downtime";
+		const time = downtime > 0 ? `${hours}h ${downtime}m downtime` : "No downtime";
 
-		return date.format("ddd, MMM Do") + ": " + time;
+		return `<b>${date.format("ddd, MMM Do")}</b>${time}`;
 	}
 
 	function renderSVG(history = {}) {
@@ -165,5 +165,31 @@
 		timeout = setTimeout(function () {
 			update();
 		}, 250);
+	});
+
+	$(document).on("mousemove", "svg", function (e) {
+		const $rect = $(e.target);
+
+		if (!$rect.hasClass("slice")) return;
+
+		const rect = $rect[0].getBoundingClientRect(),
+			offset = $rect.offset(),
+			min = 10,
+			max = $(window).width() - 200 - min,
+			left = offset.left - 100,
+			leftClamped = Math.max(min, Math.min(left, max));
+
+		$("#popover").addClass("show");
+		$("#popover .content").html($rect.attr("title"));
+
+		// Arrow is relative to the popover
+		$("#popover .arrow").css("left", 100 + (rect.width / 2) + (left - leftClamped) - 0.5);
+
+		$("#popover").css("left", leftClamped);
+		$("#popover").css("top", offset.top + 42);
+	});
+
+	$(document).on("mouseleave", "svg", function () {
+		$("#popover").removeClass("show");
 	});
 })($);
