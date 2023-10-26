@@ -100,4 +100,6 @@ func main() {
 
 	_ = os.WriteFile("status.json", jsn, 0777)
 	_ = os.WriteFile("public/status.json", jsn, 0777)
+
+	UpdateSummary(status)
 }
