@@ -17,11 +17,11 @@ func SortKeys(mp map[string]StatusEntry, cb func(string, StatusEntry)) {
 		a := keys[i]
 		b := keys[j]
 
-		aDown := mp[a].Status != 0
-		bDown := mp[b].Status != 0
+		aDown := !mp[a].Operational
+		bDown := !mp[b].Operational
 
-		aNew := mp[a].New
-		bNew := mp[b].New
+		aNew := mp[a]._new
+		bNew := mp[b]._new
 
 		if aDown && !bDown {
 			return true
@@ -43,12 +43,12 @@ func SortKeys(mp map[string]StatusEntry, cb func(string, StatusEntry)) {
 	}
 }
 
-func _error(err error, t int64) StatusEntry {
+func _error(err error, responseTime int64) StatusEntry {
 	return StatusEntry{
-		Status: time.Now().Unix(),
-		Type:   "http",
-		Error:  err.Error(),
-		Time:   t,
+		Operational:  false,
+		Type:         "http",
+		Error:        err.Error(),
+		ResponseTime: responseTime,
 	}
 }
 

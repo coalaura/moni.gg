@@ -97,9 +97,8 @@ func _mysql(hostname, port, username, password, database, query string) StatusEn
 	}
 
 	return StatusEntry{
-		Status: 0,
-		Type:   "mysql",
-		Error:  "",
-		Time:   _time(start),
+		Operational:  true,
+		Type:         "mysql",
+		ResponseTime: _time(start),
 	}
 }

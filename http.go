@@ -120,9 +120,8 @@ func _request(method, url, data string, headers map[string]string) StatusEntry {
 	}
 
 	return StatusEntry{
-		Status: 0,
-		Type:   "http",
-		Error:  "",
-		Time:   _time(start),
+		Operational:  true,
+		Type:         "http",
+		ResponseTime: _time(start),
 	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"math"
 	"os"
 	"sync"
 	"time"
@@ -39,24 +38,15 @@ func main() {
 		return
 	}
 
-	status.New = 0
 	status.Down = 0
-
-	minute := getMinute()
-
-	oldestMinute := minute - (144 * 5)
 
 	var (
 		mutex sync.Mutex
 		wg    sync.WaitGroup
-
-		short = SmallJSON{}
 	)
 
 	for name, task := range tasks {
 		log.DebugF("Checking %s...\n", name)
-
-		short.Total++
 
 		previous, ok := status.Data[name]
 		previousStatus := ok && previous.Error == ""
@@ -69,39 +59,19 @@ func main() {
 			currentStatus := err.Error == ""
 
 			if ok {
-				err.Historic = previous.Historic
+				err.History = previous.History
 			}
 
-			if err.Historic == nil {
-				err.Historic = make(map[int64]int)
-			}
+			err.History.TrackHistoric(currentStatus)
 
 			if currentStatus != previousStatus {
-				err.New = true
-
-				status.New++
+				err._new = true
 			}
 
 			if !currentStatus {
 				log.Warning(err.Error)
 
-				short.Offline++
-
 				status.Down++
-
-				err.Historic[minute]++
-			} else {
-				short.Online++
-			}
-
-			if ok && previous.Status > 0 && err.Status > 0 {
-				err.Status = previous.Status
-			}
-
-			for min := range err.Historic {
-				if min < oldestMinute {
-					delete(err.Historic, min)
-				}
 			}
 
 			mutex.Lock()
@@ -114,7 +84,7 @@ func main() {
 
 	wg.Wait()
 
-	if status.New > 0 {
+	if status.ShouldSendMail() {
 		SendMail(status, mainConfig)
 	}
 
@@ -124,15 +94,6 @@ func main() {
 	jsn, err := json.Marshal(status)
 	log.MustPanic(err)
 
-	shrt, err := json.Marshal(short)
-	log.MustPanic(err)
-
 	_ = os.WriteFile("status.json", jsn, 0777)
-
 	_ = os.WriteFile("public/status.json", jsn, 0777)
-	_ = os.WriteFile("public/summary.json", shrt, 0777)
-}
-
-func getMinute() int64 {
-	return int64(math.Floor(float64(time.Now().Unix()) / 600.0))
 }

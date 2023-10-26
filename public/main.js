@@ -1,98 +1,167 @@
 (function ($) {
-    const page = $("#page");
+	const widths = [
+		{ min: 1024, days: 90 },
+		{ min: 600, days: 60 },
+		{ min: 0, days: 30 }
+	];
 
-    function renderHistoric(historic) {
-        if (!historic) {
-            historic = {};
-        }
+	const colors = [
+		{min: 60, color: "#ff2600"},
+		{min: 30, color: "#eba019"},
+		{min: 10, color: "#e2c719"},
+		{min: 1, color: "#83da56"},
+		{min: 0, color: "#05f4a7"}
+	];
 
-        const max = 60;
+	const rectWidth = 3,
+		rectPadding = 2;
 
-        const now = Math.floor((Date.now() / 1000) / 600);
+	function getDays() {
+		const width = window.innerWidth;
 
-        let hours = {};
+		return widths.find(w => width >= w.min).days;
+	}
 
-        for (let min = now - (144 * 5); min < now; min++) {
-            const hour = Math.floor(min / 6);
+	function getColor(value) {
+		return colors.find(c => value >= c.min).color;
+	}
 
-            if (!(hour in hours)) {
-                hours[hour] = 0;
-            }
+	function getViewBox() {
+		const days = getDays();
 
-            const value = min in historic ? historic[min] : 0;
+		const viewBox = [];
 
-            hours[hour] += value;
-        }
+		if (days === 90) {
+			viewBox.push(0);
+		} else {
+			const offset = 90 - days;
 
-        let html = [];
+			viewBox.push((offset * rectWidth) + (rectPadding * (offset))); // x origin
+		}
 
-        let total = 0;
+		viewBox.push(0); // y origin
 
-        $.each(hours, (hour, amount) => {
-            const date = moment(hour * 60 * 60 * 1000);
+		viewBox.push((rectWidth * days) + (rectPadding * (days - 1))); // svg width
+		viewBox.push(34); // svg height
 
-            total += Math.min(amount, max);
+		return viewBox.join(' ');
+	}
 
-            const hsl = amount > 0 ? Math.ceil((1 - (Math.min(amount * 4, max) / max)) * 120) : 120;
+	function getTitle(date, downtime) {
+		const hours = Math.floor(downtime / 60);
+		downtime = downtime % 60;
 
-            html.push(`<div class="slice" style="background: hsl(${hsl}, 100%, 80%)" title="${date.format('MMMM Do YYYY, ha')}: ${amount > 0 ? amount + " minute(s)" : "No"} downtime."></div>`);
-        });
+		const time = downtime > 0 ? `${hours.toString().padStart(2, "0")}:${downtime.toString().padStart(2, "0")}` : "No downtime";
 
-        return {
-            html: html.join(""),
-            uptime: Math.floor((1 - (total / (120 * max))) * 100 * 100) / 100
-        };
-    }
+		return date.format("ddd, MMM Do") + ": " + time;
+	}
 
-    function getStatusData(data) {
-        const all = Object.values(data.data).length;
+	function renderSVG(history = {}) {
+		const rects = [];
 
-        if (data.down === all) {
-            return {
-                title: "Everything is broken",
-                image: "full.png"
-            };
-        } else if (data.down > 1) {
-            return {
-                title: "A bunch of things are not working",
-                image: "major.png"
-            };
-        }
+		for (let day = 0; day < 90; day++) {
+			const date = moment().utc().subtract(day, 'days'),
+				index = date.format("YYYY-MM-DD"),
+				downtime = history.downtimes[index] || 0,
+				x = (90 - day - 1) * (rectWidth + rectPadding);
 
-        return {
-            title: "Something seems wrong",
-            image: "partial.png"
-        };
-    }
+			rects.push(`<rect height="34" width="${rectWidth}" x="${x}" y="0" fill="${getColor(downtime)}" class="slice" title="${getTitle(date, downtime)}"></rect>`);
+		}
 
-    function update() {
-        $.get('status.json?_=' + Date.now(), function (data) {
-            page.html('');
+		const days = getDays(),
+			total = Object.values(history.downtimes).reduce((a, b) => a + b, 0),
+			uptime = ((1 - (total / (90 * 24 * 60))) * 100).toFixed(2).replace(/\.0+$|(?<=\.\d)0+$/gm, "");
 
-            if (data.down === 0) {
-                page.append('<div id="status" class="up">Yep, everything is fine <img class="main-status" src="available.png" /></div>');
-            } else {
-                const status = getStatusData(data);
+		const legend = [
+			`<div class="legend">`,
+			`<div class="item">${days} days ago</div>`,
+			`<div class="spacer"></div>`,
+			`<div class="item uptime">${uptime} % <span class="no-mobile">uptime</span></div>`,
+			`<div class="spacer"></div>`,
+			`<div class="item">Today</div>`
+		];
 
-                page.append('<div id="status" class="down">' + status.title + ' <img class="main-status" src="' + status.image + '" /></div>');
-            }
+		return {
+			svg: `<svg preserveAspectRatio="none" height="34" viewBox="${getViewBox()}">${rects.join('')}</svg>`,
+			legend: legend.join('')
+		};
+	}
 
-            page.append('<div id="services"></div>');
+	function getHeader(data) {
+		const all = Object.values(data.data).length;
 
-            $.each(data.data, function (name, status) {
-                const since = status.status ? moment(status.status * 1000) : false,
-                    historic = renderHistoric(status.historic);
+		let text = "All Systems Operational",
+			image = "available.png",
+			color = "#05f4a7";
 
-                $('#services').append('<div class="service ' + (status.status ? 'down' : 'up') + '" title="' + (status.status ? 'Service has first been unavailable ' + since.format('dddd, MMMM Do YYYY, h:mm:ss a') + '.' : 'Service is available.') + '"><span class="name">' + name + ' <sup>' + status.type + '</sup></span><span class="status-msg">' + (status.status ? 'Unavailable since ' + since.fromNow(true) : 'Available') + ' (' + historic.uptime + '% uptime)</span><div class="historic">' + historic.html + '</div></div>');
-            });
+		if (data.down === all) {
+			text = "Full Outage";
+			image = "full.png";
+			color = "#ff2600";
+		} else if (data.down > 1) {
+			text = "Major Outage";
+			image = "major.png";
+			color = "#eba019";
+		} else if (data.down === 1) {
+			text = "Partial Outage";
+			image = "partial.png";
+			color = "#e2c719";
+		}
 
-            const date = moment(data.time * 1000);
+		return {
+			text: text,
+			image: image,
+			color: color
+		};
+	}
 
-            page.append('<div id="time" title="Status was last updated ' + date.from() + '.">' + date.format('dddd, MMMM Do YYYY, h:mm:ss a') + '</div>');
-        });
-    }
+	function update() {
+		$.get("status.json?_=" + Date.now(), function (data) {
+			const header = getHeader(data);
 
-    update();
+			$("#status span").text(header.text);
+			$("#status img").attr("src", header.image);
+			$("#status").css("background-color", header.color);
 
-    //setInterval(update, 5000);
+			$("#services").empty();
+
+			$.each(data.data, function (name, status) {
+				const svg = renderSVG(status.history);
+
+				const html = [
+					`<div class="service ${status.operational ? "up" : "down"}">`,
+					`<div class="header">`,
+					`<span class="name">${name} <sup>${status.type}</sup></span>`,
+					`<span class="status">${status.operational ? "Operational" : "Outage"}</span>`,
+					`</div>`,
+					`<div class="body">`,
+					svg.svg,
+					svg.legend,
+					`</div>`,
+					`</div>`
+				];
+
+				$("#services").append(html.join(''));
+			});
+
+			const date = moment(data.time * 1000);
+
+			$("#time").attr("title", "Status was last updated " + date.from());
+			$("#time").text(date.format('dddd, MMMM Do YYYY, h:mm:ss a'));
+		});
+	}
+
+	update();
+
+	setInterval(update, 15000);
+
+	let timeout;
+
+	$(window).on("resize", function () {
+		clearTimeout(timeout);
+
+		timeout = setTimeout(function () {
+			update();
+		}, 250);
+	});
 })($);
