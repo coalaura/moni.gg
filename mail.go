@@ -107,14 +107,14 @@ func BuildMail(entries map[string]StatusEntry, url string) string {
 			src = strings.ReplaceAll(src, "{{type}}", strings.ToLower(entry.Type))
 
 			if entry.Operational {
-				src = strings.ReplaceAll(src, "{{background}}", "#d6ffd6")
-				src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back online after <b>%dms</b>.", entry.ResponseTime))
+				src = strings.ReplaceAll(src, "{{background}}", "#d6fff2")
+				src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service is back operational after <b>%dms</b>.", entry.ResponseTime))
 				src = strings.ReplaceAll(src, "{{image}}", "cid:mail_up.png")
 			} else {
 				err := string(errorTemplate)
 				err = strings.ReplaceAll(err, "{{error}}", entry.Error)
 
-				src = strings.ReplaceAll(src, "{{background}}", "#ffd6d6")
+				src = strings.ReplaceAll(src, "{{background}}", "#ffdcd6")
 				src = strings.ReplaceAll(src, "{{text}}", fmt.Sprintf("Service went down after <b>%dms</b>. %s", entry.ResponseTime, err))
 				src = strings.ReplaceAll(src, "{{image}}", "cid:mail_down.png")
 			}
@@ -126,10 +126,10 @@ func BuildMail(entries map[string]StatusEntry, url string) string {
 			src = strings.ReplaceAll(src, "{{name}}", name)
 
 			if entry.Operational {
-				src = strings.ReplaceAll(src, "{{background}}", "#b3ffb3")
-				src = strings.ReplaceAll(src, "{{text}}", "Online")
+				src = strings.ReplaceAll(src, "{{background}}", "#b3ffe7")
+				src = strings.ReplaceAll(src, "{{text}}", "Operational")
 			} else {
-				src = strings.ReplaceAll(src, "{{background}}", "#ffb3b3")
+				src = strings.ReplaceAll(src, "{{background}}", "#ffbeb3")
 				src = strings.ReplaceAll(src, "{{text}}", "Still Offline")
 			}
 		}
