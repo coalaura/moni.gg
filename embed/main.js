@@ -6,11 +6,11 @@
 	];
 
 	const colors = [
-		{min: 60, color: "#ff2600"},
-		{min: 30, color: "#eba019"},
-		{min: 10, color: "#e2c719"},
-		{min: 1, color: "#83da56"},
-		{min: 0, color: "#05f4a7"}
+		{ min: 60, color: "#ff2600" },
+		{ min: 30, color: "#eba019" },
+		{ min: 10, color: "#e2c719" },
+		{ min: 1, color: "#83da56" },
+		{ min: 0, color: "#05f4a7" }
 	];
 
 	const rectWidth = 3,
@@ -116,39 +116,41 @@
 	}
 
 	function update() {
-		$.get("status.json?_=" + Date.now(), function (data) {
-			const header = getHeader(data);
+		fetch("status.json?_=" + Date.now())
+			.then(response => response.json())
+			.then(data => {
+				const header = getHeader(data);
 
-			$("#status span").text(header.text);
-			$("#status img").attr("src", header.image);
-			$("#status").css("background-color", header.color);
+				$("#status span").text(header.text);
+				$("#status img").attr("src", header.image);
+				$("#status").css("background-color", header.color);
 
-			$("#services").empty();
+				$("#services").empty();
 
-			$.each(data.data, function (name, status) {
-				const svg = renderSVG(status.history);
+				$.each(data.data, function (name, status) {
+					const svg = renderSVG(status.history);
 
-				const html = [
-					`<div class="service ${status.operational ? "up" : "down"}">`,
-					`<div class="header">`,
-					`<span class="name">${name} <sup>${status.type}</sup></span>`,
-					`<span class="status">${status.operational ? "Operational" : "Outage"}</span>`,
-					`</div>`,
-					`<div class="body">`,
-					svg.svg,
-					svg.legend,
-					`</div>`,
-					`</div>`
-				];
+					const html = [
+						`<div class="service ${status.operational ? "up" : "down"}">`,
+						`<div class="header">`,
+						`<span class="name">${name} <sup>${status.type}</sup></span>`,
+						`<span class="status">${status.operational ? "Operational" : "Outage"}</span>`,
+						`</div>`,
+						`<div class="body">`,
+						svg.svg,
+						svg.legend,
+						`</div>`,
+						`</div>`
+					];
 
-				$("#services").append(html.join(''));
+					$("#services").append(html.join(''));
+				});
+
+				const date = moment(data.time * 1000);
+
+				$("#time").attr("title", "Status was last updated " + date.from());
+				$("#time").text(date.format('dddd, MMMM Do YYYY, h:mm:ss a'));
 			});
-
-			const date = moment(data.time * 1000);
-
-			$("#time").attr("title", "Status was last updated " + date.from());
-			$("#time").text(date.format('dddd, MMMM Do YYYY, h:mm:ss a'));
-		});
 	}
 
 	update();
