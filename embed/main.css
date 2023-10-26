@@ -175,12 +175,11 @@ body {
 
 #footer {
 	background: #1d222f;
-	padding: 1rem 1.25rem;
+	padding: 0.65rem 1.25rem;
 	position: fixed;
 	font-size: 0.875rem;
 	line-height: 1rem;
-	color: #c6ccdc;
-	opacity: 0.5;
+	color: rgba(198, 204, 220, 0.5);
 	width: 100%;
 	bottom: 0;
 	text-align: center;

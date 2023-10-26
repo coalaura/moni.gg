@@ -22,6 +22,7 @@ type Config struct {
 	TemplateURL         string
 	TemplateTitle       string
 	TemplateDescription string
+	TemplateCopyright   string
 }
 
 func ReadMainConfig() (*Config, error) {
@@ -51,5 +52,6 @@ func ReadMainConfig() (*Config, error) {
 		TemplateURL:         env["TEMPLATE_URL"],
 		TemplateTitle:       env["TEMPLATE_TITLE"],
 		TemplateDescription: env["TEMPLATE_DESCRIPTION"],
+		TemplateCopyright:   env["TEMPLATE_COPYRIGHT"],
 	}, nil
 }

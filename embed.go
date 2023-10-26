@@ -98,6 +98,9 @@ func _setVariables(content []byte, cfg *Config, hash string) []byte {
 	content = bytes.ReplaceAll(content, []byte("{{title}}"), _default(cfg.TemplateTitle, DefaultTitle))
 	content = bytes.ReplaceAll(content, []byte("{{description}}"), _default(cfg.TemplateDescription, DefaultDescription))
 
+	// Optional: copyright
+	content = bytes.ReplaceAll(content, []byte("{{copyright}}"), []byte(cfg.TemplateCopyright))
+
 	content = bytes.ReplaceAll(content, []byte("{{hash}}"), []byte(hash))
 
 	return content
