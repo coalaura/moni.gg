@@ -6,17 +6,6 @@ import (
 	"time"
 )
 
-type Config struct {
-	StatusPage string
-
-	EmailTo string
-
-	SMTPHost     string
-	SMTPPort     int
-	SMTPPassword string
-	SMTPUser     string
-}
-
 type History struct {
 	Downtimes map[string]int64 `json:"downtimes"`
 	CheckedAt int64            `json:"checked_at"`

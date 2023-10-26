@@ -2,3 +2,6 @@ config
 *.json
 status
 .env
+public/index.html
+public/main.js
+public/main.css

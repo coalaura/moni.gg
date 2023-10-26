@@ -1,14 +1,28 @@
 package main
 
 import (
-	"io/fs"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/joho/godotenv"
 )
+
+type Config struct {
+	StatusPage string
+
+	EmailTo string
+
+	SMTPHost     string
+	SMTPPort     int
+	SMTPPassword string
+	SMTPUser     string
+
+	TemplateFavicon     string
+	TemplateBanner      string
+	TemplateURL         string
+	TemplateTitle       string
+	TemplateDescription string
+}
 
 func ReadMainConfig() (*Config, error) {
 	data, err := os.ReadFile(".env")
@@ -31,45 +45,11 @@ func ReadMainConfig() (*Config, error) {
 		SMTPPort:     port,
 		SMTPUser:     env["SMTP_USER"],
 		SMTPPassword: env["SMTP_PASSWORD"],
+
+		TemplateFavicon:     env["TEMPLATE_FAVICON"],
+		TemplateBanner:      env["TEMPLATE_BANNER"],
+		TemplateURL:         env["TEMPLATE_URL"],
+		TemplateTitle:       env["TEMPLATE_TITLE"],
+		TemplateDescription: env["TEMPLATE_DESCRIPTION"],
 	}, nil
-}
-
-func ReadConfigs() (map[string]Task, error) {
-	configs := make(map[string]Task)
-
-	err := filepath.Walk("./config", func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		ext := filepath.Ext(path)
-
-		if ext != ".http" && ext != ".mysql" {
-			return nil
-		}
-
-		name := strings.Split(filepath.Base(path), ".")[0]
-
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		content := strings.ReplaceAll(string(data), "\r\n", "\n")
-
-		switch ext {
-		case ".http":
-			configs[name] = NewHTTPTask(content)
-		case ".mysql":
-			configs[name] = NewMySQLTask(content)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return configs, nil
 }

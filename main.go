@@ -23,8 +23,12 @@ func main() {
 	mainConfig, err := ReadMainConfig()
 	log.MustPanic(err)
 
-	log.Info("Reading .envs...")
-	tasks, err := ReadConfigs()
+	log.Info("Re-building frontend...")
+	err = ReBuildFrontend(mainConfig)
+	log.MustPanic(err)
+
+	log.Info("Loading tasks...")
+	tasks, err := LoadTasks()
 	log.MustPanic(err)
 
 	log.Info("Reading previous status...")
