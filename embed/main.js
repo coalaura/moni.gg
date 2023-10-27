@@ -70,13 +70,14 @@
 
 		const days = getDays(),
 			total = Object.values(history.downtimes).reduce((a, b) => a + b, 0),
-			uptime = ((1 - (total / (90 * 24 * 60))) * 100).toFixed(2).replace(/\.0+$|(?<=\.\d)0+$/gm, "");
+			uptime = Math.floor((1 - (total / (90 * 24 * 60))) * 10000) / 100,
+			uptimeFmt = uptime.toFixed(2).replace(/\.0+$|(?<=\.\d)0+$/gm, "")
 
 		const legend = [
 			`<div class="legend">`,
 			`<div class="item">${days} days ago</div>`,
 			`<div class="spacer"></div>`,
-			`<div class="item uptime">${uptime} % <span class="no-mobile">uptime</span></div>`,
+			`<div class="item uptime">${uptimeFmt} % <span class="no-mobile">uptime</span></div>`,
 			`<div class="spacer"></div>`,
 			`<div class="item">Today</div>`
 		];
