@@ -22,7 +22,9 @@
 		return widths.find(w => width >= w.min).days;
 	}
 
-	function getColor(value) {
+	function getColor(value, noData) {
+		if (noData) return "#7d7d7d";
+
 		return colors.find(c => value >= c.min).color;
 	}
 
@@ -44,28 +46,32 @@
 		viewBox.push((rectWidth * days) + (rectPadding * (days - 1))); // svg width
 		viewBox.push(34); // svg height
 
-		return viewBox.join(' ');
+		return viewBox.join(" ");
 	}
 
-	function getTitle(date, downtime) {
+	function getTitle(date, downtime, noData) {
 		const hours = Math.floor(downtime / 60);
 		downtime = downtime % 60;
 
 		const time = downtime > 0 ? `${hours}h ${downtime}m downtime` : "No downtime";
 
-		return `<b>${date.format("ddd, MMM Do")}</b>${time}`;
+		return `<b>${date.format("ddd, MMM Do")}</b>${noData ? "<i>No data</i>" : time}`;
 	}
 
 	function renderSVG(history = {}) {
+		const earliest = history.first_checked_at || 0;
+
 		const rects = [];
 
 		for (let day = 0; day < 90; day++) {
-			const date = moment().utc().subtract(day, 'days'),
+			const date = moment().utc().subtract(day, "days"),
 				index = date.format("YYYY-MM-DD"),
 				downtime = history.downtimes[index] || 0,
 				x = (90 - day - 1) * (rectWidth + rectPadding);
 
-			rects.push(`<rect height="34" width="${rectWidth}" x="${x}" y="0" fill="${getColor(downtime)}" class="slice" title="${getTitle(date, downtime)}"></rect>`);
+			const noData = date.unix() < earliest;
+
+			rects.push(`<rect height="34" width="${rectWidth}" x="${x}" y="0" fill="${getColor(downtime, noData)}" class="slice" title="${getTitle(date, downtime, noData)}"></rect>`);
 		}
 
 		const days = getDays(),
@@ -83,7 +89,7 @@
 		];
 
 		return {
-			svg: `<svg preserveAspectRatio="none" height="34" viewBox="${getViewBox()}">${rects.join('')}</svg>`,
+			svg: `<svg preserveAspectRatio="none" height="34" viewBox="${getViewBox()}">${rects.join("")}</svg>`,
 			legend: legend.join('')
 		};
 	}
@@ -150,7 +156,7 @@
 				const date = moment(data.time * 1000);
 
 				$("#time").attr("title", "Status was last updated " + date.from());
-				$("#time").text(date.format('dddd, MMMM Do YYYY, h:mm:ss a'));
+				$("#time").text(date.format("dddd, MMMM Do YYYY, h:mm:ss a"));
 			});
 	}
 

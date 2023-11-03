@@ -2,6 +2,12 @@ package main
 
 import "time"
 
+type History struct {
+	Downtimes      map[string]int64 `json:"downtimes"`
+	CheckedAt      int64            `json:"checked_at"`
+	FirstCheckedAt int64            `json:"first_checked_at"`
+}
+
 func (h *History) TrackHistoric(isUp bool) {
 	h.Cleanup()
 
@@ -57,8 +63,20 @@ func (h *History) Cleanup() {
 	for day := range h.Downtimes {
 		d, err := time.Parse("2006-01-02", day)
 
-		if err != nil || d.Unix() < unixMin {
-			delete(h.Downtimes, day)
+		if err == nil {
+			unix := d.Unix()
+
+			if unix < unixMin {
+				delete(h.Downtimes, day)
+			}
+
+			if unix != 0 && (unix < h.FirstCheckedAt || h.FirstCheckedAt == 0) {
+				h.FirstCheckedAt = unix
+			}
 		}
+	}
+
+	if h.FirstCheckedAt == 0 {
+		h.FirstCheckedAt = time.Now().Unix()
 	}
 }

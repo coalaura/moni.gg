@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-type History struct {
-	Downtimes map[string]int64 `json:"downtimes"`
-	CheckedAt int64            `json:"checked_at"`
-}
-
 type StatusEntry struct {
 	Operational bool   `json:"operational"`
 	Type        string `json:"type"`
